@@ -121,10 +121,10 @@ function AgentVisualizer() {
     );
   }
   return (
-    <div className="h-[200px] w-[100px]">
+    <div className="h-[300px] w-[70%]">
       <BarVisualizer
         state={agentState}
-        barCount={5}
+        barCount={20}
         trackRef={audioTrack}
         className="agent-visualizer"
         options={{ minHeight: 24 }}
