@@ -82,7 +82,7 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
               className="uppercase px-4 py-2 bg-white text-black rounded-md"
               onClick={() => props.onConnectButtonClicked()}
             >
-              Start a conversation
+              ZACZNIJ ROZMOWE
             </motion.button>
           </motion.div>
         ) : (
@@ -148,7 +148,7 @@ function ControlBar(props: { onConnectButtonClicked: () => void }) {
             className="uppercase absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-white text-black rounded-md"
             onClick={() => props.onConnectButtonClicked()}
           >
-            Start a conversation
+            ZACZNIJ ROZMOWE
           </motion.button>
         )}
       </AnimatePresence>
