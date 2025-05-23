@@ -21,26 +21,24 @@ export default function Page() {
   const [room] = useState(new Room());
 
   const onConnectButtonClicked = useCallback(async () => {
-    setTimeout(async () => {
-      // Generate room connection details, including:
-      //   - A random Room name
-      //   - A random Participant name
-      //   - An Access Token to permit the participant to join the room
-      //   - The URL of the LiveKit server to connect to
-      //
-      // In real-world application, you would likely allow the user to specify their
-      // own participant name, and possibly to choose from existing rooms to join.
+    // Generate room connection details, including:
+    //   - A random Room name
+    //   - A random Participant name
+    //   - An Access Token to permit the participant to join the room
+    //   - The URL of the LiveKit server to connect to
+    //
+    // In real-world application, you would likely allow the user to specify their
+    // own participant name, and possibly to choose from existing rooms to join.
 
-      const url = new URL(
-        process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
-        window.location.origin
-      );
-      const response = await fetch(url.toString());
-      const connectionDetailsData: ConnectionDetails = await response.json();
+    const url = new URL(
+      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
+      window.location.origin
+    );
+    const response = await fetch(url.toString());
+    const connectionDetailsData: ConnectionDetails = await response.json();
 
-      await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
-      await room.localParticipant.setMicrophoneEnabled(true);
-    }, 5000);
+    await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
+    await room.localParticipant.setMicrophoneEnabled(true);
   }, [room]);
 
   useEffect(() => {
@@ -123,7 +121,7 @@ function AgentVisualizer() {
     );
   }
   return (
-    <div className="h-[180px] w-full">
+    <div className="h-[200px] w-[100px]">
       <BarVisualizer
         state={agentState}
         barCount={5}
