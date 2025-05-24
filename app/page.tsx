@@ -121,7 +121,7 @@ function AgentVisualizer() {
     );
   }
   return (
-    <div className="h-[300px] w-full bg-[#f7f7f6]">
+    <div className="h-[300px] w-full">
       <BarVisualizer
         state={agentState}
         barCount={20}

@@ -5,8 +5,8 @@
 :root {
   --lk-va-bar-width: 72px;
   --lk-control-bar-height: unset;
-  --lk-va-bg: #eeefe7; /* Kolor słupków w stanie idle */
-  --lk-fg: #eeefe7;    /* Kolor słupków w stanie active (i ogólny kolor pierwszego planu motywu) */
+  /* --lk-va-bg: #eeefe7; */ /* Usunięta zmienna */
+  /* --lk-fg: #eeefe7;    */ /* Usunięta zmienna */
 }
 
 .agent-visualizer > .lk-audio-bar {
