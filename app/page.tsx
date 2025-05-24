@@ -73,7 +73,7 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="grid items-center justify-center h-full"
+            className="grid items-center justify-center h-full bg-[#f7f7f6]"
           >
             <motion.button
               initial={{ opacity: 0 }}
@@ -92,7 +92,7 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="flex flex-col items-center gap-4 h-full"
+            className="flex flex-col items-center gap-4 h-full bg-[#f7f7f6]"
           >
             <AgentVisualizer />
             <div className="flex-1 w-full">
