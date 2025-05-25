@@ -5,12 +5,19 @@
 :root {
   --lk-va-bar-width: 72px;
   --lk-control-bar-height: unset;
-  --lk-fg: #DBE0C3; /* Kolor aktywnych pasków */
-  --lk-va-bg: #F6F6F6; /* Kolor tła wizualizatora (paski "idle") */
 }
 
 .agent-visualizer > .lk-audio-bar {
   width: 72px;
+}
+
+/* Style dla BarVisualizer */
+.lk-audio-bar {
+  background-color: #F6F6F6 !important; /* Tło wizualizatora / paski "idle" */
+}
+
+.lk-audio-bar.lk-highlighted {
+  background-color: #DBE0C3 !important; /* Kolor aktywnych pasków */
 }
 
 .lk-agent-control-bar {
