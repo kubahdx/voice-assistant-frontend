@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`h-full ${publicSans400.className}`}>
-      <body className="h-full">{children}</body>
+      <body className="h-full bg-[#F6F6F6]">{children}</body>
     </html>
   );
 }
