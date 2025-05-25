@@ -12,7 +12,7 @@
 }
 
 .agent-visualizer > .lk-audio-bar {
-  width: 72px;
+  width: 45px;
 }
 
 /* Style dla BarVisualizer */
@@ -58,33 +58,3 @@
   background-color: #c8d0b0; /* Opcjonalny ciemniejszy kolor uchwytu przy najechaniu */
 }
 
-/* Próba usunięcia gradientów z menu wyboru urządzeń LiveKit */
-
-/* Dla przypadków, gdy gradient jest realizowany przez mask-image */
-.lk-device-menu > ul,
-.lk-listbox > ul, /* Może być używane ogólnie dla list wyboru */
-.lk-select-menu > ul, /* Inna typowa nazwa dla menu wyboru */
-.lk-dropdown-menu-items /* Częsta klasa dla kontenera opcji dropdownu */
-{
-  mask-image: none !important;
-}
-
-/* Dla przypadków, gdy gradient jest realizowany przez pseudo-elementy ::before i ::after */
-.lk-device-menu > ul::before,
-.lk-device-menu > ul::after,
-.lk-listbox > ul::before,
-.lk-listbox > ul::after,
-.lk-select-menu > ul::before,
-.lk-select-menu > ul::after,
-.lk-dropdown-menu-items::before,
-.lk-dropdown-menu-items::after {
-  display: none !important; /* Ukrywa pseudo-elementy */
-  background-image: none !important; /* Usuwa ich tło gradientowe */
-  content: none !important; /* Usuwa ich ewentualną zawartość */
-}
-
-/* Usuwamy poprzednią próbę zmiany koloru słupków
-.lk-audio-bar {
-  fill: #eeefe7 !important; 
-}
-*/
