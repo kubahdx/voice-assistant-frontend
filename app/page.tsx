@@ -18,35 +18,17 @@ import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
 import CallHeader from "@/components/CallHeader";
 import WelcomePopup from "@/components/WelcomePopup";
-import EntryAnimation from "@/components/EntryAnimation";
 
 export default function Page() {
   const [room] = useState(new Room());
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
-  const [showEntryAnimation, setShowEntryAnimation] = useState(false);
 
   useEffect(() => {
-    const hasSeenAnimation = localStorage.getItem("hasSeenEntryAnimation");
-    if (!hasSeenAnimation) {
-      setShowEntryAnimation(true);
-    } else {
-      // If animation has been seen, check for welcome popup
-      const hasVisited = localStorage.getItem("hasVisitedSite");
-      if (!hasVisited) {
-        setShowWelcomePopup(true);
-      }
-    }
-  }, []);
-
-  const handleEntryAnimationComplete = () => {
-    localStorage.setItem("hasSeenEntryAnimation", "true");
-    setShowEntryAnimation(false);
-    // Now check if we need to show the welcome popup
     const hasVisited = localStorage.getItem("hasVisitedSite");
     if (!hasVisited) {
       setShowWelcomePopup(true);
     }
-  };
+  }, []);
 
   const handleClosePopup = () => {
     localStorage.setItem("hasVisitedSite", "true");
@@ -84,7 +66,6 @@ export default function Page() {
 
   return (
     <main data-lk-theme="default" className="h-full grid content-center bg-[#F6F6F6]">
-      {showEntryAnimation && <EntryAnimation onComplete={handleEntryAnimationComplete} />}
       {showWelcomePopup && <WelcomePopup onClose={handleClosePopup} />}
       <RoomContext.Provider value={room}>
         <div className="lk-room-container max-w-[1024px] w-[90vw] mx-auto max-h-[90vh]">
