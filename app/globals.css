@@ -5,6 +5,7 @@
 :root {
   --lk-va-bar-width: 72px;
   --lk-control-bar-height: unset;
+  --lk-bg: #f6f6f6;
 }
 
 .agent-visualizer > .lk-audio-bar {
@@ -19,9 +20,7 @@
 .lk-audio-bar.lk-highlighted {
   background-color: #C3CB9C !important; /* Kolor aktywnych pasków */
 }
-.lk-bg {
-  background-color: #f6f6f6 !important;
-}
+
 .lk-agent-control-bar {
   @apply border-t-0 p-0 h-min mr-4;
 }
