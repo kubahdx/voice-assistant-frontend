@@ -13,13 +13,15 @@
 
 /* Style dla BarVisualizer */
 .lk-audio-bar {
-  background-color: #F6F6F6 !important; /* Tło wizualizatora / paski "idle" */
+  background-color: #DBE0C3 !important; /* Tło wizualizatora / paski "idle" */
 }
 
 .lk-audio-bar.lk-highlighted {
-  background-color: #DBE0C3 !important; /* Kolor aktywnych pasków */
+  background-color: #C3CB9C !important; /* Kolor aktywnych pasków */
 }
-
+.lk-bg {
+  background-color: #f6f6f6 !important;
+}
 .lk-agent-control-bar {
   @apply border-t-0 p-0 h-min mr-4;
 }
