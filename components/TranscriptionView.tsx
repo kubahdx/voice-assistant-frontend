@@ -19,7 +19,7 @@ export default function TranscriptionView() {
       <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#f7f7f6] to-transparent z-10 pointer-events-none" />
 
       {/* Scrollable content */}
-      <div ref={containerRef} className="h-full flex flex-col gap-2 overflow-y-auto px-4 py-8">
+      <div ref={containerRef} className="custom-scrollbar h-full flex flex-col gap-2 overflow-y-auto px-4 py-8">
         {combinedTranscriptions.map((segment) => (
           <div
             id={segment.id}
