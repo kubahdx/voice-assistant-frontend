@@ -26,8 +26,8 @@ export default function TranscriptionView() {
             key={segment.id}
             className={
               segment.role === "assistant"
-                ? "p-2 self-start fit-content"
-                : "bg-gray-800 rounded-md p-2 self-end fit-content"
+                ? "p-2 self-start fit-content text-[#59651F]"
+                : "bg-gray-800 rounded-md p-2 self-end fit-content text-[#C6CCA8]"
             }
           >
             {segment.text}
