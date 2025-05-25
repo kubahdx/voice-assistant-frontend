@@ -5,6 +5,9 @@
 :root {
   --lk-va-bar-width: 72px;
   --lk-control-bar-height: unset;
+}
+
+[data-lk-theme="default"] {
   --lk-bg: #f6f6f6 !important;
 }
 
