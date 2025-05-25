@@ -17,7 +17,7 @@
 
 /* Style dla BarVisualizer */
 .lk-audio-bar {
-  background-color: #DBE0C3 !important; /* Tło wizualizatora / paski "idle" */
+  background-color: #C3CB9C !important; /* Tło wizualizatora / paski "idle" */
 }
 
 .lk-audio-bar.lk-highlighted {
@@ -29,7 +29,7 @@
 }
 
 .lk-disconnect-button {
-  @apply h-[36px] hover:bg-[#F43F5E] hover:text-[white] bg-[#f55873] border-[#F43F5E];
+  @apply h-[36px] hover:bg-[#F43F5E] hover:text-[white] bg-[#eb5e76] border-[#bf1523];
 }
 
 /* Usuwamy poprzednią próbę zmiany koloru słupków
