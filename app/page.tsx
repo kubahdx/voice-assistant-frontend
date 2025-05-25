@@ -79,7 +79,7 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, delay: 0.1 }}
-              className="uppercase px-4 py-2 bg-[#DBE0C3] text-white rounded-md"
+              className="uppercase px-4 py-2 bg-[#C3CB9C] text-white rounded-md"
               onClick={() => props.onConnectButtonClicked()}
             >
               ZACZNIJ ROZMOWE
@@ -145,7 +145,7 @@ function ControlBar(props: { onConnectButtonClicked: () => void }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, top: "-10px" }}
             transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="uppercase absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-[#DBE0C3] text-white rounded-md"
+            className="uppercase absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-[#C3CB9C] text-white rounded-md"
             onClick={() => props.onConnectButtonClicked()}
           >
             ZACZNIJ ROZMOWE
