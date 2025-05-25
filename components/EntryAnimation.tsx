@@ -6,47 +6,42 @@ interface EntryAnimationProps {
 }
 
 const EntryAnimation: React.FC<EntryAnimationProps> = ({ onComplete }) => {
-  const gradientColors = ['#C3CB9C', '#A7B37B', '#8A9A5B', '#59651F']; // Shades of your theme green
+  // Rozszerzona paleta zieleni, od jaśniejszego do ciemniejszego
+  const gradientColors = [
+    '#D9E0B3', // Jaśniejszy odcień
+    '#C3CB9C', 
+    '#A7B37B',
+    '#8A9A5B',
+    '#707D4A', // Dodatkowy pośredni odcień
+    '#59651F',
+  ];
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center"
+      className="fixed bottom-0 left-0 right-0 h-16 z-[100]" // Pasek na dole, wysokość np. h-16 (64px)
       style={{
-        background: `linear-gradient(-45deg, ${gradientColors[0]}, ${gradientColors[1]}, ${gradientColors[2]}, ${gradientColors[3]})`,
-        backgroundSize: '400% 400%',
+        background: `linear-gradient(-45deg, ${gradientColors.join(', ')})`,
+        backgroundSize: '600% 600%', // Zwiększony rozmiar dla płynniejszego przejścia z większą liczbą kolorów
       }}
-      initial={{ opacity: 1, backgroundPosition: '0% 50%' }}
+      initial={{ opacity: 1, backgroundPosition: '0% 50%', height: '4rem' }} // height: '4rem' to odpowiednik h-16
       animate={{
-        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'], // Creates a flowing effect
-        opacity: [1, 1, 1, 0], // Stays visible, then fades out
+        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+        opacity: [1, 1, 0], // Pozostaje widoczny, potem zanika
       }}
       transition={{
         backgroundPosition: {
-          duration: 4,
+          duration: 2.5, // Krótszy czas płynięcia gradientu
           ease: 'easeInOut',
-          repeat: 0, // Play the background animation once
+          repeat: 0,
         },
         opacity: {
-          duration: 1.5, // Fade out duration
-          delay: 3, // Start fading out after background animation has mostly played
+          duration: 1, // Czas zanikania
+          delay: 2,    // Zacznij zanikać po 2s
           ease: 'easeOut',
         },
       }}
       onAnimationComplete={onComplete}
-    >
-      {/* You could add text or a logo here if desired, e.g., Reflecta fading in and out */}
-      {/* <motion.h1 
-        className="text-6xl font-bold text-white mix-blend-overlay"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: [0, 1, 1, 0], y: [20, 0, 0, -20] }}
-        transition={{
-          opacity: { duration: 3, delay: 0.5, times: [0, 0.3, 0.7, 1] },
-          y: { duration: 3, delay: 0.5, times: [0, 0.3, 0.7, 1] },
-        }}
-      >
-        Reflecta
-      </motion.h1> */}
-    </motion.div>
+    />
   );
 };
 
