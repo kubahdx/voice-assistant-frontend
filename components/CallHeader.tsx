@@ -21,9 +21,9 @@ export default function CallHeader() {
   };
 
   return (
-    <div className="text-center py-4">
+    <div className="text-center py-4 mt-[50px] sm:mt-0">
       <div className="text-xl font-bold text-[#C3CB9C]">
-        Sonder {formatTime(elapsedTime)}
+        Reflecta {formatTime(elapsedTime)}
       </div>
       <div className="text-sm text-gray-500">by Jakub G.</div>
     </div>

@@ -17,9 +17,23 @@ import { Room, RoomEvent } from "livekit-client";
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
 import CallHeader from "@/components/CallHeader";
+import WelcomePopup from "@/components/WelcomePopup";
 
 export default function Page() {
   const [room] = useState(new Room());
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+
+  useEffect(() => {
+    const hasVisited = localStorage.getItem("hasVisitedSite");
+    if (!hasVisited) {
+      setShowWelcomePopup(true);
+    }
+  }, []);
+
+  const handleClosePopup = () => {
+    localStorage.setItem("hasVisitedSite", "true");
+    setShowWelcomePopup(false);
+  };
 
   const onConnectButtonClicked = useCallback(async () => {
     // Generate room connection details, including:
@@ -52,6 +66,7 @@ export default function Page() {
 
   return (
     <main data-lk-theme="default" className="h-full grid content-center bg-[#F6F6F6]">
+      {showWelcomePopup && <WelcomePopup onClose={handleClosePopup} />}
       <RoomContext.Provider value={room}>
         <div className="lk-room-container max-w-[1024px] w-[90vw] mx-auto max-h-[90vh]">
           <SimpleVoiceAssistant onConnectButtonClicked={onConnectButtonClicked} />
