@@ -115,7 +115,7 @@ function AgentVisualizer() {
 
   if (videoTrack) {
     return (
-      <div className="h-[512px] w-[512px] rounded-lg overflow-hidden">
+      <div className="h-[512px] w-[514px] rounded-lg overflow-hidden">
         <VideoTrack trackRef={videoTrack} />
       </div>
     );
