@@ -9,7 +9,7 @@ const publicSans400 = Public_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Voice Assistant",
+  title: "Reflecta by Jakub G.",
 };
 
 export default function RootLayout({
