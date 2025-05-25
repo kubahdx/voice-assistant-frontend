@@ -5,8 +5,8 @@
 :root {
   --lk-va-bar-width: 72px;
   --lk-control-bar-height: unset;
-  /* --lk-va-bg: #eeefe7; */ /* Usunięta zmienna */
-  /* --lk-fg: #eeefe7;    */ /* Usunięta zmienna */
+  --lk-fg: #DBE0C3; /* Kolor aktywnych pasków */
+  --lk-va-bg: #F6F6F6; /* Kolor tła wizualizatora (paski "idle") */
 }
 
 .agent-visualizer > .lk-audio-bar {
