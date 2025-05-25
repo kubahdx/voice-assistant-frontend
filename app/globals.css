@@ -5,7 +5,7 @@
 :root {
   --lk-va-bar-width: 72px;
   --lk-control-bar-height: unset;
-  --lk-bg: #f6f6f6;
+  --lk-bg: #f6f6f6 !important;
 }
 
 .agent-visualizer > .lk-audio-bar {
