@@ -16,6 +16,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Room, RoomEvent } from "livekit-client";
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
+import CallHeader from "@/components/CallHeader";
 
 export default function Page() {
   const [room] = useState(new Room());
@@ -94,6 +95,7 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
             transition={{ duration: 0.3, ease: [0.09, 1.04, 0.245, 1.055] }}
             className="flex flex-col items-center gap-4 h-full bg-[#f7f7f6]"
           >
+            <CallHeader />
             <AgentVisualizer />
             <div className="flex-1 w-full">
               <TranscriptionView />
