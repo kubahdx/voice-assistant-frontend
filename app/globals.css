@@ -29,5 +29,31 @@
 }
 
 .lk-disconnect-button {
-  @apply h-[36px] hover:bg-[#F43F5E] hover:text-[white] bg-[#eb5e76] border-[#bf1523];
+  @apply h-[36px] hover:bg-[#6b221a] hover:text-[white] bg-[#31100c] border-[#6b221a];
+}
+
+/* Style dla niestandardowego paska przewijania */
+.custom-scrollbar {
+  /* Dla Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #DBE0C3 transparent; /* Uchwyt: #DBE0C3, Ścieżka: przezroczysta */
+}
+
+/* Dla przeglądarek WebKit (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* Ścieżka: przezroczysta */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #DBE0C3; /* Uchwyt: #DBE0C3 */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #c8d0b0; /* Opcjonalny ciemniejszy kolor uchwytu przy najechaniu (przyciemniony #DBE0C3) */
 }
