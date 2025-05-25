@@ -73,7 +73,7 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="grid items-center justify-center h-full bg-[#f7f7f6]"
+            className="grid items-center justify-center h-full bg-[#F6F6F6]"
           >
             <motion.button
               initial={{ opacity: 0 }}
