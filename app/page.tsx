@@ -24,14 +24,10 @@ export default function Page() {
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   useEffect(() => {
-    const hasVisited = localStorage.getItem("hasVisitedSite");
-    if (!hasVisited) {
-      setShowWelcomePopup(true);
-    }
+    setShowWelcomePopup(true);
   }, []);
 
   const handleClosePopup = () => {
-    localStorage.setItem("hasVisitedSite", "true");
     setShowWelcomePopup(false);
   };
 
