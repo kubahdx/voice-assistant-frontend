@@ -124,7 +124,7 @@ function AgentVisualizer() {
     <div className="h-[300px] w-full">
       <BarVisualizer
         state={agentState}
-        barCount={5}
+        barCount={10}
         trackRef={audioTrack}
         className="agent-visualizer"
         options={{ minHeight: 24 }}
@@ -175,6 +175,6 @@ function ControlBar(props: { onConnectButtonClicked: () => void }) {
 function onDeviceFailure(error: Error) {
   console.error(error);
   alert(
-    "Error acquiring camera or microphone permissions. Please make sure you grant the necessary permissions in your browser and reload the tab"
+    "Błąd podczas uzyskiwania uprawnień do kamery lub mikrofonu. Upewnij się, że nadałeś niezbędne uprawnienia w przeglądarce i przeładuj kartę."
   );
 }
