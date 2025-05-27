@@ -11,7 +11,6 @@ import {
   VideoTrack,
   VoiceAssistantControlBar,
   useVoiceAssistant,
-  useRoomContext,
 } from "@livekit/components-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Room, RoomEvent } from "livekit-client";
@@ -75,21 +74,6 @@ export default function Page() {
 
 function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
   const { state: agentState } = useVoiceAssistant();
-  const room = useRoomContext();
-  const [textMessage, setTextMessage] = useState("");
-
-  const handleSendTextMessage = async () => {
-    if (textMessage.trim() === "" || !room.localParticipant) {
-      return;
-    }
-    try {
-      console.log("Wysyłanie wiadomości:", textMessage);
-      await room.localParticipant.sendText(textMessage, { topic: "user_text_message" });
-      setTextMessage("");
-    } catch (error) {
-      console.error("Błąd podczas wysyłania wiadomości tekstowej:", error);
-    }
-  };
 
   return (
     <>
@@ -128,28 +112,6 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
               <TranscriptionView />
             </div>
             <div className="w-full">
-              <div className="flex gap-2 p-2">
-                <input
-                  type="text"
-                  value={textMessage}
-                  onChange={(e) => setTextMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      handleSendTextMessage();
-                    }
-                  }}
-                  placeholder="Napisz wiadomość..."
-                  className="flex-1 p-2 border rounded-md"
-                  disabled={agentState === "disconnected" || agentState === "connecting"}
-                />
-                <button
-                  onClick={handleSendTextMessage}
-                  className="px-4 py-2 bg-[#7E8F54] text-white rounded-md disabled:bg-gray-400"
-                  disabled={agentState === "disconnected" || agentState === "connecting" || textMessage.trim() === ""}
-                >
-                  Wyślij
-                </button>
-              </div>
               <ControlBar onConnectButtonClicked={props.onConnectButtonClicked} />
             </div>
             <RoomAudioRenderer />
