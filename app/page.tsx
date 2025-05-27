@@ -148,6 +148,12 @@ function AgentVisualizer() {
 
 function ControlBar(props: { onConnectButtonClicked: () => void }) {
   const { state: agentState } = useVoiceAssistant();
+  const [textInput, setTextInput] = useState("");
+
+  const handleSendText = () => {
+    console.log("Wysłano tekst:", textInput);
+    setTextInput("");
+  };
 
   return (
     <div className="relative h-[60px]">
@@ -172,9 +178,22 @@ function ControlBar(props: { onConnectButtonClicked: () => void }) {
             animate={{ opacity: 1, top: 0 }}
             exit={{ opacity: 0, top: "-10px" }}
             transition={{ duration: 0.4, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="flex h-8 absolute left-1/2 -translate-x-1/2  justify-center"
+            className="flex h-8 absolute left-1/2 -translate-x-1/2  justify-center items-center gap-2"
           >
             <VoiceAssistantControlBar controls={{ leave: false }} />
+            <input
+              type="text"
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              placeholder="Napisz wiadomość..."
+              className="px-2 py-1 border rounded-md"
+            />
+            <button
+              onClick={handleSendText}
+              className="px-3 py-1 bg-blue-500 text-white rounded-md"
+            >
+              Wyślij
+            </button>
             <DisconnectButton>
               <CloseIcon />
             </DisconnectButton>
