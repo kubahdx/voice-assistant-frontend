@@ -16,7 +16,7 @@ export type ConnectionDetails = {
   participantToken: string;
 };
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     if (LIVEKIT_URL === undefined) {
       throw new Error("LIVEKIT_URL is not defined");
@@ -27,13 +27,6 @@ export async function GET(request: Request) {
     if (API_SECRET === undefined) {
       throw new Error("LIVEKIT_API_SECRET is not defined");
     }
-
-    // Get voice selection from query params
-    const url = new URL(request.url);
-    const voice = url.searchParams.get('voice') || 'male';
-    const voiceId = voice === 'female' 
-      ? '575a5d29-1fdc-4d4e-9afa-5a9a71759864'
-      : '4ef93bb3-682a-46e6-b881-8e157b6b4388';
 
     // Generate participant token
     const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
