@@ -11,6 +11,8 @@ import {
   VideoTrack,
   VoiceAssistantControlBar,
   useVoiceAssistant,
+  // Dodajemy LiveKitRoom, jeśli jeszcze go nie było, lub upewniamy się, że jest
+  LiveKitRoom, 
 } from "@livekit/components-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Room, RoomEvent } from "livekit-client";
@@ -19,87 +21,232 @@ import type { ConnectionDetails } from "./api/connection-details/route";
 import CallHeader from "@/components/CallHeader";
 import WelcomePopup from "@/components/WelcomePopup";
 
-export default function Page() {
-  const [room] = useState(new Room());
-  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+type AgentPersonality = "female" | "male";
 
-  useEffect(() => {
-    setShowWelcomePopup(true);
-  }, []);
+export default function Page() {
+  // Usuwamy inicjalizację `new Room()` stąd, bo LiveKitRoom sam sobie stworzy instancję
+  // lub możemy ją przekazać, ale dla prostoty tego przykładu pozwólmy LiveKitRoom zarządzać.
+  // Jeśli jednak używasz `room.on(...)` poza kontekstem <LiveKitRoom>, musisz ją zachować
+  // i przekazać do <LiveKitRoom> przez <RoomContext.Provider> LUB jako prop.
+  // W tym przykładzie `room` jest używany w `useEffect`, więc go zostawiamy i owijamy <LiveKitRoom> w <RoomContext.Provider>
+  const [room] = useState(() => new Room()); 
+  const [showWelcomePopup, setShowWelcomePopup] = useState(true); // Pokaż popup na starcie
+
+  const [token, setToken] = useState<string | null>(null);
+  const [liveKitUrl, setLiveKitUrl] = useState<string>('');
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  // Usunięty useEffect, który tylko ustawiał showWelcomePopup, bo teraz kontrolujemy go inaczej
 
   const handleClosePopup = () => {
     setShowWelcomePopup(false);
   };
 
-  const onConnectButtonClicked = useCallback(async () => {
-    // Generate room connection details, including:
-    //   - A random Room name
-    //   - A random Participant name
-    //   - An Access Token to permit the participant to join the room
-    //   - The URL of the LiveKit server to connect to
-    //
-    // In real-world application, you would likely allow the user to specify their
-    // own participant name, and possibly to choose from existing rooms to join.
+  const onConnectButtonClicked = useCallback(async (personality: AgentPersonality) => {
+    if (isConnecting || room.state !== "disconnected") return;
 
-    const url = new URL(
-      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
-      window.location.origin
-    );
-    const response = await fetch(url.toString());
-    const connectionDetailsData: ConnectionDetails = await response.json();
+    console.log(`Rozpoczynanie rozmowy z osobowością: ${personality}`);
+    setShowWelcomePopup(false); // Ukryj popup, gdy zaczynamy łączyć
+    setIsConnecting(true);
+    try {
+      const url = new URL(
+        process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
+        window.location.origin,
+      );
+      url.searchParams.append("personality", personality);
 
-    await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
-    await room.localParticipant.setMicrophoneEnabled(true);
-  }, [room]);
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        const errorText = await response.text();
+        // Po nieudanym fetchu, pozwól użytkownikowi spróbować ponownie
+        setIsConnecting(false); 
+        setShowWelcomePopup(true); // Pokaż znowu popup lub przyciski wyboru
+        throw new Error(
+          `Nie udało się pobrać danych połączeniowych: ${response.status} ${errorText}`,
+        );
+      }
+      const connectionDetailsData: ConnectionDetails = await response.json();
+
+      console.log("Odebrano dane połączeniowe:", connectionDetailsData);
+      
+      setLiveKitUrl(connectionDetailsData.serverUrl);
+      setToken(connectionDetailsData.participantToken);
+      // Stan isConnecting zostanie ustawiony na false w handlerze onConnected lub onDisconnected komponentu LiveKitRoom
+
+    } catch (error) {
+      console.error("Błąd podczas rozpoczynania konwersacji:", error);
+      alert(`Błąd: ${error instanceof Error ? error.message : String(error)}`);
+      setIsConnecting(false);
+      setShowWelcomePopup(true); // Pokaż znowu popup lub przyciski wyboru
+      setToken(null); 
+    }
+  }, [room, isConnecting]); // Dodano isConnecting do zależności
 
   useEffect(() => {
-    room.on(RoomEvent.MediaDevicesError, onDeviceFailure);
+    const handleDeviceFailure = (error: Error) => {
+        onDeviceFailure(error);
+        setIsConnecting(false);
+        setToken(null);
+        setShowWelcomePopup(true);
+    };
+
+    // Te eventy są teraz bardziej dla informacji lub resetowania stanu,
+    // bo LiveKitRoom zarządza głównym cyklem życia połączenia.
+    const handleDisconnected = () => {
+      console.log("Odłączono z pokoju (event z obiektu Room)");
+      setToken(null); 
+      setIsConnecting(false);
+      setShowWelcomePopup(true); // Pokaż ekran wyboru po rozłączeniu
+    };
+
+    const handleConnected = () => {
+        console.log("Połączono z pokojem (event z obiektu Room)!");
+        setIsConnecting(false); 
+        setShowWelcomePopup(false);
+        // setMicrophoneEnabled jest teraz w callbacku onConnected LiveKitRoom
+    };
+
+    room.on(RoomEvent.MediaDevicesError, handleDeviceFailure);
+    room.on(RoomEvent.Disconnected, handleDisconnected);
+    room.on(RoomEvent.Connected, handleConnected);
 
     return () => {
-      room.off(RoomEvent.MediaDevicesError, onDeviceFailure);
+      room.off(RoomEvent.MediaDevicesError, handleDeviceFailure);
+      room.off(RoomEvent.Disconnected, handleDisconnected);
+      room.off(RoomEvent.Connected, handleConnected);
     };
   }, [room]);
 
+  // --- Logika wyświetlania ---
+  if (!token) { // Jeśli nie mamy tokenu, pokazujemy ekran wyboru lub ładowania
+    return (
+      <main data-lk-theme="default" className="h-full grid place-items-center content-center bg-[#F6F6F6] p-4">
+        {/* Pokazuj WelcomePopup tylko jeśli nie łączymy się i nie ma błędu z tokenem */}
+        {showWelcomePopup && !isConnecting && <WelcomePopup onClose={handleClosePopup} />}
+        
+        <div className="flex flex-col items-center justify-center">
+          {isConnecting ? (
+            // --- Animacja ładowania ---
+            <div className="flex flex-col items-center justify-center text-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  border: '6px solid rgba(0, 0, 0, 0.1)', // Jaśniejszy kolor dla tła kółka
+                  borderTop: '6px solid #AEC5D3', // Kolor pasujący do jednego z przycisków
+                  borderRadius: '50%',
+                }}
+              />
+              <p className="mt-5 text-lg text-gray-700">Łączenie z asystentem...</p>
+            </div>
+          ) : (
+            // --- Przyciski wyboru osobowości (jeśli WelcomePopup jest zamknięty) ---
+            !showWelcomePopup && (
+              <>
+                <h1 className="text-2xl font-semibold mb-8 text-center text-gray-800">Wybierz, z kim chcesz porozmawiać:</h1>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button
+                    onClick={() => onConnectButtonClicked('female')}
+                    className="uppercase px-6 py-3 bg-[#D3AEC5] hover:bg-[#C39DB5] text-white rounded-lg shadow-md transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#D3AEC5] focus:ring-opacity-50"
+                  >
+                    Psycholożka (głos żeński)
+                  </button>
+                  <button
+                    onClick={() => onConnectButtonClicked('male')}
+                    className="uppercase px-6 py-3 bg-[#AEC5D3] hover:bg-[#9DB5C3] text-white rounded-lg shadow-md transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#AEC5D3] focus:ring-opacity-50"
+                  >
+                    Psycholog (głos męski)
+                  </button>
+                </div>
+              </>
+            )
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  // Jeśli mamy token i URL, renderujemy LiveKitRoom
   return (
     <main data-lk-theme="default" className="h-full grid content-center bg-[#F6F6F6]">
-      {showWelcomePopup && <WelcomePopup onClose={handleClosePopup} />}
+      {/* RoomContext.Provider jest potrzebny, jeśli komponenty wewnątrz LiveKitRoom
+          lub sam LiveKitRoom potrzebują dostępu do tej konkretnej instancji `room`,
+          którą stworzyliśmy wyżej. Komponenty LiveKit Components React często tworzą
+          własny kontekst lub pobierają go. Dla pewności zostawiam. */}
       <RoomContext.Provider value={room}>
-        <div className="lk-room-container max-w-[1024px] w-[90vw] mx-auto max-h-[90vh]">
-          <SimpleVoiceAssistant onConnectButtonClicked={onConnectButtonClicked} />
+        <div className="lk-room-container max-w-[1024px] w-[90vw] mx-auto max-h-[90vh] bg-white shadow-xl rounded-lg">
+          {liveKitUrl && token && ( // Upewnij się, że oba są dostępne przed renderowaniem
+            <LiveKitRoom
+              room={room} // Przekazujemy naszą instancję pokoju
+              token={token}
+              serverUrl={liveKitUrl}
+              connect={true} 
+              audio={true} 
+              video={false} 
+              onConnected={async () => {
+                console.log("LiveKitRoom: Połączono!");
+                setIsConnecting(false); // Połączenie udane, zatrzymaj animację ładowania
+                setShowWelcomePopup(false);
+                if (room.localParticipant) {
+                  try {
+                    await room.localParticipant.setMicrophoneEnabled(true);
+                    console.log("LiveKitRoom: Mikrofon włączony.");
+                  } catch (micError) {
+                    console.error("LiveKitRoom: Błąd włączania mikrofonu:", micError);
+                    onDeviceFailure(micError instanceof Error ? micError : new Error(String(micError)));
+                  }
+                }
+              }}
+              onDisconnected={() => {
+                console.log("LiveKitRoom: Rozłączono.");
+                setToken(null); 
+                setIsConnecting(false);
+                setShowWelcomePopup(true);
+              }}
+              // Dodajemy onError, aby złapać ewentualne błędy połączenia z LiveKitRoom
+              onError={(error) => {
+                console.error("LiveKitRoom: Błąd połączenia:", error);
+                alert(`Błąd połączenia z LiveKit: ${error.message}`);
+                setToken(null);
+                setIsConnecting(false);
+                setShowWelcomePopup(true);
+              }}
+            >
+              <SimpleVoiceAssistantInsideRoom />
+            </LiveKitRoom>
+          )}
         </div>
       </RoomContext.Provider>
     </main>
   );
 }
 
-function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
+function SimpleVoiceAssistantInsideRoom() {
   const { state: agentState } = useVoiceAssistant();
+  // const room = useContext(RoomContext); // Jeśli potrzebujesz dostępu do obiektu pokoju tutaj
 
   return (
     <>
       <AnimatePresence mode="wait">
-        {agentState === "disconnected" ? (
-          <motion.div
-            key="disconnected"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="grid items-center justify-center h-full bg-[#F6F6F6]"
+        {agentState === "disconnected" && (
+          <motion.div 
+            key="disconnected-state-in-room" // Unikalny klucz
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center h-full p-4 text-center"
           >
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="uppercase px-4 py-2 bg-[#C3CB9C] text-white rounded-md"
-              onClick={() => props.onConnectButtonClicked()}
-            >
-              ZACZNIJ ROZMOWE
-            </motion.button>
+             <p className="text-lg text-gray-700 mb-4">Połączenie z asystentem zostało zakończone lub wystąpił błąd.</p>
+             {/* Możesz dodać przycisk, który np. wywołuje `window.location.reload()` 
+                 lub bardziej zaawansowaną logikę ponownego połączenia */}
           </motion.div>
-        ) : (
+        )}
+        {/* Sprawdzamy, czy agentState nie jest null/undefined, aby uniknąć błędów renderowania */}
+        {agentState && agentState !== "disconnected" && (
           <motion.div
-            key="connected"
+            key="connected-state-in-room" // Unikalny klucz
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -112,7 +259,7 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
               <TranscriptionView />
             </div>
             <div className="w-full">
-              <ControlBar onConnectButtonClicked={props.onConnectButtonClicked} />
+              <ControlBar /> 
             </div>
             <RoomAudioRenderer />
             <NoAgentNotification state={agentState} />
@@ -139,43 +286,34 @@ function AgentVisualizer() {
         state={agentState}
         barCount={7}
         trackRef={audioTrack}
-        className="agent-visualizer"
+        className="agent-visualizer" // Upewnij się, że masz style dla tej klasy
         options={{ minHeight: 24 }}
       />
     </div>
   );
 }
 
-function ControlBar(props: { onConnectButtonClicked: () => void }) {
+function ControlBar() {
   const { state: agentState } = useVoiceAssistant();
+  // const room = useContext(RoomContext); // Możesz potrzebować, jeśli DisconnectButton nie działa z hooka
 
   return (
     <div className="relative h-[60px]">
       <AnimatePresence>
-        {agentState === "disconnected" && (
-          <motion.button
-            initial={{ opacity: 0, top: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, top: "-10px" }}
-            transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="uppercase absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-[#C3CB9C] text-white rounded-md"
-            onClick={() => props.onConnectButtonClicked()}
-          >
-            ZACZNIJ ROZMOWE
-          </motion.button>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {agentState !== "disconnected" && agentState !== "connecting" && (
+        {/* Usuwamy warunek agentState === "disconnected" dla VoiceAssistantControlBar,
+            bo przycisk rozłączania jest teraz głównym elementem kontrolnym po połączeniu. */}
+        {agentState && agentState !== "disconnected" && agentState !== "connecting" && (
           <motion.div
             initial={{ opacity: 0, top: "10px" }}
             animate={{ opacity: 1, top: 0 }}
             exit={{ opacity: 0, top: "-10px" }}
             transition={{ duration: 0.4, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="flex h-8 absolute left-1/2 -translate-x-1/2  justify-center"
+            className="flex h-8 absolute left-1/2 -translate-x-1/2  justify-center items-center" // Dodano items-center
           >
+            {/* Upewnij się, że VoiceAssistantControlBar nie ma własnego przycisku rozłączania,
+                jeśli używasz dedykowanego DisconnectButton obok */}
             <VoiceAssistantControlBar controls={{ leave: false }} />
-            <DisconnectButton>
+            <DisconnectButton /* onClick={() => room?.disconnect()} */ > {/* Jeśli DisconnectButton potrzebuje room z kontekstu */}
               <CloseIcon />
             </DisconnectButton>
           </motion.div>
@@ -186,8 +324,16 @@ function ControlBar(props: { onConnectButtonClicked: () => void }) {
 }
 
 function onDeviceFailure(error: Error) {
-  console.error(error);
+  console.error("Błąd urządzenia:", error);
   alert(
-    "Błąd podczas uzyskiwania uprawnień do kamery lub mikrofonu. Upewnij się, że nadałeś niezbędne uprawnienia w przeglądarce i przeładuj kartę."
+    "Błąd podczas uzyskiwania uprawnień do kamery lub mikrofonu. Upewnij się, że nadałeś niezbędne uprawnienia w przeglądarce i przeładuj kartę.",
   );
 }
+
+// Typ ConnectionDetails, upewnij się, że jest zdefiniowany lub zaimportowany poprawnie
+// export type ConnectionDetails = {
+//   serverUrl: string;
+//   roomName: string;
+//   participantName: string;
+//   participantToken: string;
+// };
