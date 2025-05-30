@@ -117,4 +117,26 @@ export async function GET(request: NextRequest) {
       return new NextResponse(error.message, { status: 500 });
     }
     console.error("Nieznany błąd w /api/connection-details:", error);
-    return new NextResponse("An unknown error occurred", { status:
+    return new NextResponse("An unknown error occurred", { status: 500 });
+  }
+}
+
+// Funkcja createParticipantToken pozostaje bez zmian
+function createParticipantToken(
+  userInfo: AccessTokenOptions,
+  roomName: string,
+): Promise<string> { // Dodano typ zwracany Promise<string> dla jasności
+  const at = new AccessToken(API_KEY, API_SECRET, {
+    ...userInfo,
+    ttl: "15m", // 15 minut ważności tokenu
+  });
+  const grant: VideoGrant = {
+    room: roomName,
+    roomJoin: true,
+    canPublish: true,
+    canPublishData: true,
+    canSubscribe: true,
+  };
+  at.addGrant(grant);
+  return at.toJwt();
+}
