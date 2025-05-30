@@ -1,19 +1,12 @@
-// ASYSTENT_GLOSOWY/voice-assistant-frontend/app/api/connection-details/route.ts
+import { AccessToken, AccessTokenOptions, VideoGrant } from "livekit-server-sdk";
+import { NextResponse } from "next/server";
 
-import {
-  AccessToken,
-  AccessTokenOptions,
-  VideoGrant,
-  AgentDispatchClient, // <--- Używamy tego klienta
-  // typ CreateDispatchOptions jest opcjonalny, ale przydatny do zrozumienia struktury
-  // import type { CreateDispatchOptions } from "livekit-server-sdk"; 
-} from "livekit-server-sdk";
-import { NextRequest, NextResponse } from "next/server";
-
+// NOTE: you are expected to define the following environment variables in `.env.local`:
 const API_KEY = process.env.LIVEKIT_API_KEY;
 const API_SECRET = process.env.LIVEKIT_API_SECRET;
-const LIVEKIT_URL = process.env.LIVEKIT_URL; // Np. wss://twoj-projekt.livekit.cloud
+const LIVEKIT_URL = process.env.LIVEKIT_URL;
 
+// don't cache the results
 export const revalidate = 0;
 
 export type ConnectionDetails = {
@@ -23,68 +16,34 @@ export type ConnectionDetails = {
   participantToken: string;
 };
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     if (LIVEKIT_URL === undefined) {
-      console.error("Błąd serwera: LIVEKIT_URL nie jest zdefiniowany");
       throw new Error("LIVEKIT_URL is not defined");
     }
     if (API_KEY === undefined) {
-      console.error("Błąd serwera: LIVEKIT_API_KEY nie jest zdefiniowany");
       throw new Error("LIVEKIT_API_KEY is not defined");
     }
     if (API_SECRET === undefined) {
-      console.error("Błąd serwera: LIVEKIT_API_SECRET nie jest zdefiniowany");
       throw new Error("LIVEKIT_API_SECRET is not defined");
     }
 
-    const { searchParams } = new URL(request.url);
-    const personality = searchParams.get("personality") || "female";
-    console.log(`Odebrano żądanie dla osobowości: ${personality}`);
+    // Get voice selection from query params
+    const url = new URL(request.url);
+    const voice = url.searchParams.get('voice') || 'male';
+    const voiceId = voice === 'female' 
+      ? '575a5d29-1fdc-4d4e-9afa-5a9a71759864'
+      : '4ef93bb3-682a-46e6-b881-8e157b6b4388';
 
-    const participantIdentity = `voice_assistant_user_${Math.floor(
-      Math.random() * 10_000,
-    )}`;
-    const roomName = `voice_assistant_room_${Math.floor(
-      Math.random() * 10_000,
-    )}`;
-    
+    // Generate participant token
+    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
+    const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
     const participantToken = await createParticipantToken(
       { identity: participantIdentity },
-      roomName,
-    );
-    console.log(`Wygenerowano token dla użytkownika: ${participantIdentity} do pokoju: ${roomName}`);
-
-    // --- Jawne Przydzielenie Agenta (Explicit Agent Dispatch) ---
-    const livekitHost = LIVEKIT_URL.replace(/^wss?:\/\//, ''); 
-    
-    const agentDispatchClient = new AgentDispatchClient( // Poprawny klient
-      livekitHost,
-      API_KEY,
-      API_SECRET,
+      roomName
     );
 
-    const agentToDispatch = "psycholog-agent"; // Nazwa agenta, którego chcesz uruchomić
-                                            // Powinna pasować do `agent_name` w WorkerOptions agenta Pythona,
-                                            // jeśli tam ją ustawiłeś.
-    const agentMetadata = JSON.stringify({
-      personality: personality,
-    });
-
-    console.log(`Wysyłanie żądania dispatch dla agenta: ${agentToDispatch} do pokoju: ${roomName} z metadanymi: ${agentMetadata}`);
-    try {
-      // Poprawne wywołanie createDispatch zgodnie z dokumentacją
-      await agentDispatchClient.createDispatch(
-        roomName, 
-        agentToDispatch, 
-        { metadata: agentMetadata } // Opcje, w tym metadata
-      );
-      console.log(`Żądanie dispatch dla agenta wysłane pomyślnie dla pokoju: ${roomName}`);
-    } catch (dispatchError) {
-      console.error(`Błąd podczas wysyłania żądania dispatch dla agenta: ${dispatchError instanceof Error ? dispatchError.message : String(dispatchError)}`, dispatchError);
-    }
-    // --------------------------------------------------------------------
-
+    // Return connection details
     const data: ConnectionDetails = {
       serverUrl: LIVEKIT_URL,
       roomName,
@@ -95,21 +54,15 @@ export async function GET(request: NextRequest) {
       "Cache-Control": "no-store",
     });
     return NextResponse.json(data, { headers });
-
   } catch (error) {
     if (error instanceof Error) {
-      console.error("Błąd w /api/connection-details:", error.message, error.stack);
+      console.error(error);
       return new NextResponse(error.message, { status: 500 });
     }
-    console.error("Nieznany błąd w /api/connection-details:", error);
-    return new NextResponse("An unknown error occurred", { status: 500 });
   }
 }
 
-function createParticipantToken(
-  userInfo: AccessTokenOptions,
-  roomName: string,
-): Promise<string> {
+function createParticipantToken(userInfo: AccessTokenOptions, roomName: string) {
   const at = new AccessToken(API_KEY, API_SECRET, {
     ...userInfo,
     ttl: "15m",
