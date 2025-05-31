@@ -10,6 +10,10 @@ interface LiveKitProtocolRoomAgentDispatch {
 }
 
 interface LiveKitProtocolRoomConfiguration {
+  name?: string;
+  emptyTimeout?: number;
+  departureTimeout?: number;
+  maxParticipants?: number;
   agents?: LiveKitProtocolRoomAgentDispatch[];
   // other RoomConfiguration fields
 }
@@ -50,6 +54,7 @@ export async function GET(request: NextRequest) {
       roomName = `voice-assistant-room_${Math.floor(Math.random() * 10_000)}`;
       console.warn(`roomName not provided, generated random: ${roomName}`);
     }
+    const currentRoomName = roomName;
 
     if (!participantIdentity) {
       participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
@@ -83,13 +88,11 @@ export async function GET(request: NextRequest) {
       };
       
       const roomConfigForToken: LiveKitProtocolRoomConfiguration = {
+        name: currentRoomName,
         agents: [agentDispatchConfig],
       };
       
-      // Assigning the manually constructed object that should be structurally compatible
-      // with RoomConfiguration from '@livekit/protocol' as expected by token.roomConfig setter.
-      token.roomConfig = roomConfigForToken as any; // Using 'as any' to bypass strict compile-time check if exact type is elusive to import/construct.
-                                                // The runtime behavior depends on LiveKit server correctly interpreting this structure.
+      token.roomConfig = roomConfigForToken as any;
     }
 
     token.addGrant(grant);
