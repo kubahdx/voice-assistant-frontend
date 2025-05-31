@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     let roomName = searchParams.get("roomName");
     let participantIdentity = searchParams.get("participantName");
+    const voice = searchParams.get("voice");
 
     if (!roomName) {
       roomName = `voice-assistant-room_${Math.floor(Math.random() * 10_000)}`;
@@ -43,8 +44,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate participant token
+    const tokenOptions: AccessTokenOptions = { identity: participantIdentity };
+    if (voice === "male" || voice === "female") {
+      tokenOptions.metadata = JSON.stringify({ voice_gender: voice });
+    }
+
     const participantToken = await createParticipantToken(
-      { identity: participantIdentity },
+      tokenOptions,
       roomName
     );
 
