@@ -1,22 +1,7 @@
 import { AccessToken, VideoGrant } from "livekit-server-sdk";
 import { NextRequest, NextResponse } from "next/server";
-
-// Placeholder types based on expected structure for @livekit/protocol
-// This is to satisfy TypeScript when actual types are not directly importable
-// from livekit-server-sdk for construction, though AccessToken.d.ts references them.
-interface LiveKitProtocolRoomAgentDispatch {
-  agentName?: string;
-  // other fields like version, id, metadata - assuming optional or handled by server if not provided
-}
-
-interface LiveKitProtocolRoomConfiguration {
-  name?: string;
-  emptyTimeout?: number;
-  departureTimeout?: number;
-  maxParticipants?: number;
-  agents?: LiveKitProtocolRoomAgentDispatch[];
-  // other RoomConfiguration fields
-}
+// Attempting to import actual constructs from @livekit/protocol
+import { RoomConfiguration, RoomAgentDispatch } from '@livekit/protocol';
 
 // NOTE: you are expected to define the following environment variables in `.env.local` (lub w zmiennych środowiskowych hostingu):
 const livekitHost = process.env.LIVEKIT_URL!;
@@ -83,16 +68,25 @@ export async function GET(request: NextRequest) {
     if (agentToDispatchName) {
       grant.roomCreate = true; 
       
-      const agentDispatchConfig: LiveKitProtocolRoomAgentDispatch = {
-        agentName: agentToDispatchName,
-      };
-      
-      const roomConfigForToken: LiveKitProtocolRoomConfiguration = {
-        name: currentRoomName,
-        agents: [agentDispatchConfig],
-      };
-      
-      token.roomConfig = roomConfigForToken as any;
+      let dispatch;
+      if (voice === "female") {
+        dispatch = new RoomAgentDispatch({ agentName: "agent_female_nazwa" });
+      } else if (voice === "male") {
+        dispatch = new RoomAgentDispatch({ agentName: "agent_male_nazwa" });
+      }
+
+      if (dispatch) {
+        token.roomConfig = new RoomConfiguration({
+          name: currentRoomName,
+          agents: [dispatch],
+          emptyTimeout: 0, 
+          departureTimeout: 0,
+          maxParticipants: 0,
+          minPlayoutDelay: 0,
+          maxPlayoutDelay: 0,
+          syncStreams: false, 
+        });
+      }
     }
 
     token.addGrant(grant);
