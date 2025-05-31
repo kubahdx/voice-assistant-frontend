@@ -1,5 +1,5 @@
 import { AccessToken, AccessTokenOptions, VideoGrant } from "livekit-server-sdk";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // NOTE: you are expected to define the following environment variables in `.env.local`:
 const API_KEY = process.env.LIVEKIT_API_KEY;
@@ -16,7 +16,7 @@ export type ConnectionDetails = {
   participantToken: string;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     if (LIVEKIT_URL === undefined) {
       throw new Error("LIVEKIT_URL is not defined");
@@ -28,9 +28,21 @@ export async function GET() {
       throw new Error("LIVEKIT_API_SECRET is not defined");
     }
 
+    const searchParams = request.nextUrl.searchParams;
+    let roomName = searchParams.get("roomName");
+    let participantIdentity = searchParams.get("participantName");
+
+    if (!roomName) {
+      roomName = `voice-assistant-room_${Math.floor(Math.random() * 10_000)}`;
+      console.warn(`roomName not provided, generated random: ${roomName}`);
+    }
+
+    if (!participantIdentity) {
+      participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
+      console.warn(`participantName not provided, generated random: ${participantIdentity}`);
+    }
+
     // Generate participant token
-    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
-    const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
     const participantToken = await createParticipantToken(
       { identity: participantIdentity },
       roomName
@@ -52,6 +64,7 @@ export async function GET() {
       console.error(error);
       return new NextResponse(error.message, { status: 500 });
     }
+    return new NextResponse("An unknown error occurred", { status: 500 });
   }
 }
 
