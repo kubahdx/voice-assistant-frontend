@@ -18,10 +18,15 @@ import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
 import CallHeader from "@/components/CallHeader";
 import WelcomePopup from "@/components/WelcomePopup";
+import { VoiceSelectionUI } from "@/components/VoiceSelectionUI";
 
 export default function Page() {
   const [room] = useState(new Room());
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<"male" | "female" | null>(
+    null
+  );
+  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     setShowWelcomePopup(true);
@@ -31,26 +36,36 @@ export default function Page() {
     setShowWelcomePopup(false);
   };
 
-  const onConnectButtonClicked = useCallback(async () => {
-    // Generate room connection details, including:
-    //   - A random Room name
-    //   - A random Participant name
-    //   - An Access Token to permit the participant to join the room
-    //   - The URL of the LiveKit server to connect to
-    //
-    // In real-world application, you would likely allow the user to specify their
-    // own participant name, and possibly to choose from existing rooms to join.
+  const onConnectButtonClicked = useCallback(
+    async (voice: "male" | "female") => {
+      if (isConnecting) return;
+      setIsConnecting(true);
+      setSelectedVoice(voice);
 
-    const url = new URL(
-      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
-      window.location.origin
-    );
-    const response = await fetch(url.toString());
-    const connectionDetailsData: ConnectionDetails = await response.json();
+      const baseUrl =
+        process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details";
+      const url = new URL(baseUrl, window.location.origin);
+      url.searchParams.append("voice", voice);
 
-    await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
-    await room.localParticipant.setMicrophoneEnabled(true);
-  }, [room]);
+      try {
+        const response = await fetch(url.toString());
+        if (!response.ok) {
+          throw new Error(`Failed to fetch connection details: ${response.statusText}`);
+        }
+        const connectionDetailsData: ConnectionDetails = await response.json();
+
+        await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
+        await room.localParticipant.setMicrophoneEnabled(true);
+      } catch (error) {
+        console.error("Error connecting to room:", error);
+        alert("Wystąpił błąd podczas próby połączenia. Sprawdź konsolę, aby uzyskać więcej informacji.");
+        setSelectedVoice(null);
+      } finally {
+        setIsConnecting(false);
+      }
+    },
+    [room, isConnecting]
+  );
 
   useEffect(() => {
     room.on(RoomEvent.MediaDevicesError, onDeviceFailure);
@@ -65,37 +80,59 @@ export default function Page() {
       {showWelcomePopup && <WelcomePopup onClose={handleClosePopup} />}
       <RoomContext.Provider value={room}>
         <div className="lk-room-container max-w-[1024px] w-[90vw] mx-auto max-h-[90vh]">
-          <SimpleVoiceAssistant onConnectButtonClicked={onConnectButtonClicked} />
+          <SimpleVoiceAssistant
+            onConnectButtonClicked={onConnectButtonClicked}
+            selectedVoice={selectedVoice}
+            isConnecting={isConnecting}
+          />
         </div>
       </RoomContext.Provider>
     </main>
   );
 }
 
-function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
+function SimpleVoiceAssistant(props: {
+  onConnectButtonClicked: (voice: "male" | "female") => void;
+  selectedVoice: "male" | "female" | null;
+  isConnecting: boolean;
+}) {
   const { state: agentState } = useVoiceAssistant();
+
+  const handleVoiceSelectAndConnect = (voice: "male" | "female") => {
+    if (!props.isConnecting) {
+      props.onConnectButtonClicked(voice);
+    }
+  };
 
   return (
     <>
       <AnimatePresence mode="wait">
-        {agentState === "disconnected" ? (
+        {agentState === "disconnected" && !props.selectedVoice ? (
+          <VoiceSelectionUI onVoiceSelect={handleVoiceSelectAndConnect} />
+        ) : agentState === "disconnected" && props.selectedVoice && props.isConnecting ? (
           <motion.div
-            key="disconnected"
+            key="connecting"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3, ease: [0.09, 1.04, 0.245, 1.055] }}
             className="grid items-center justify-center h-full bg-[#F6F6F6]"
           >
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="uppercase px-4 py-2 bg-[#C3CB9C] text-white rounded-md"
-              onClick={() => props.onConnectButtonClicked()}
-            >
-              ZACZNIJ ROZMOWE
-            </motion.button>
+            <p className="text-lg text-gray-600">Łączenie...</p>
+          </motion.div>
+        ) : agentState === "disconnected" && props.selectedVoice && !props.isConnecting ? (
+          <motion.div
+            key="disconnected-retry"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: [0.09, 1.04, 0.245, 1.055] }}
+            className="grid items-center justify-center h-full bg-[#F6F6F6] gap-4"
+          >
+            <p className="text-lg text-center text-gray-700">
+              Nie udało się połączyć. <br />Spróbuj ponownie wybrać głos.
+            </p>
+            <VoiceSelectionUI onVoiceSelect={handleVoiceSelectAndConnect} />
           </motion.div>
         ) : (
           <motion.div
@@ -112,7 +149,7 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
               <TranscriptionView />
             </div>
             <div className="w-full">
-              <ControlBar onConnectButtonClicked={props.onConnectButtonClicked} />
+              <ControlBar />
             </div>
             <RoomAudioRenderer />
             <NoAgentNotification state={agentState} />
@@ -146,7 +183,7 @@ function AgentVisualizer() {
   );
 }
 
-function ControlBar(props: { onConnectButtonClicked: () => void }) {
+function ControlBar() {
   const { state: agentState } = useVoiceAssistant();
 
   return (
@@ -159,9 +196,8 @@ function ControlBar(props: { onConnectButtonClicked: () => void }) {
             exit={{ opacity: 0, top: "-10px" }}
             transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
             className="uppercase absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-[#C3CB9C] text-white rounded-md"
-            onClick={() => props.onConnectButtonClicked()}
           >
-            ZACZNIJ ROZMOWE
+            ZACZNIJ ROZMOWE PONOWNIE (debug)
           </motion.button>
         )}
       </AnimatePresence>
