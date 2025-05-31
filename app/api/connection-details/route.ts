@@ -48,13 +48,14 @@ export async function GET(request: NextRequest) {
       identity: participantIdentity,
     });
 
-    const grant = new VideoGrant();
-    grant.room = roomName;
-    grant.roomJoin = true;
-    grant.canPublish = true;
-    grant.canPublishData = true;
-    grant.canSubscribe = true;
-    grant.roomCreate = true;
+    const grant: VideoGrant = {
+      room: roomName,
+      roomJoin: true,
+      canPublish: true,
+      canPublishData: true,
+      canSubscribe: true,
+      roomCreate: true,
+    };
 
     let dispatch;
     if (voice === "female") {
