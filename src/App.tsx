@@ -129,19 +129,22 @@ const App: React.FC = () => {
     <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{textAlign: 'center'}}>Wirtualny Asystent</h1>
       
+      {/* Sekcja wyboru głosu - zawsze widoczna, jeśli nie jesteśmy połączeni */}
       {(!room || room.state === 'disconnected') && (
-        <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '5px'}}>
+        <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
           <VoiceSelection onVoiceSelect={handleVoiceSelect} currentVoice={selectedVoice} />
-          {selectedVoice && roomName && (
-            <p style={{ marginTop: '10px' }}>Wybrany głos: <strong>{selectedVoice === 'male' ? 'Męski' : 'Żeński'}</strong>.</p>
+          {selectedVoice && (
+            <>
+              <p style={{ marginTop: '10px' }}>Wybrany głos: <strong>{selectedVoice === 'male' ? 'Męski' : 'Żeński'}</strong>.</p>
+              <button 
+                onClick={connectToRoom} 
+                disabled={isConnecting} // Usunięto !selectedVoice || !roomName, bo przycisk pojawia się tylko gdy są
+                style={{ marginTop: '20px', padding: '10px 15px', fontSize: '16px', cursor: 'pointer' }}
+              >
+                {isConnecting ? 'Łączenie...' : 'Połącz z Agentem'}
+              </button>
+            </>
           )}
-          <button 
-            onClick={connectToRoom} 
-            disabled={!selectedVoice || !roomName || isConnecting}
-            style={{ marginTop: '20px', padding: '10px 15px', fontSize: '16px', cursor: 'pointer' }}
-          >
-            {isConnecting ? 'Łączenie...' : 'Połącz z Agentem'}
-          </button>
           {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
         </div>
       )}
