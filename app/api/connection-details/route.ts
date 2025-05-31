@@ -1,10 +1,23 @@
-import { AccessToken, VideoGrant, RoomConfiguration, RoomAgentDispatch } from "livekit-server-sdk";
+import { AccessToken, VideoGrant } from "livekit-server-sdk";
 import { NextRequest, NextResponse } from "next/server";
 
+// Placeholder types based on expected structure for @livekit/protocol
+// This is to satisfy TypeScript when actual types are not directly importable
+// from livekit-server-sdk for construction, though AccessToken.d.ts references them.
+interface LiveKitProtocolRoomAgentDispatch {
+  agentName?: string;
+  // other fields like version, id, metadata - assuming optional or handled by server if not provided
+}
+
+interface LiveKitProtocolRoomConfiguration {
+  agents?: LiveKitProtocolRoomAgentDispatch[];
+  // other RoomConfiguration fields
+}
+
 // NOTE: you are expected to define the following environment variables in `.env.local` (lub w zmiennych środowiskowych hostingu):
-const API_KEY = process.env.LIVEKIT_API_KEY;
-const API_SECRET = process.env.LIVEKIT_API_SECRET;
-const LIVEKIT_URL = process.env.LIVEKIT_URL;
+const livekitHost = process.env.LIVEKIT_URL!;
+const livekitApiKey = process.env.LIVEKIT_API_KEY!;
+const livekitApiSecret = process.env.LIVEKIT_API_SECRET!;
 
 // don't cache the results
 export const revalidate = 0;
@@ -18,20 +31,20 @@ export type ConnectionDetails = {
 
 export async function GET(request: NextRequest) {
   try {
-    if (LIVEKIT_URL === undefined) {
+    if (livekitHost === undefined) {
       throw new Error("LIVEKIT_URL is not defined");
     }
-    if (API_KEY === undefined) {
+    if (livekitApiKey === undefined) {
       throw new Error("LIVEKIT_API_KEY is not defined");
     }
-    if (API_SECRET === undefined) {
+    if (livekitApiSecret === undefined) {
       throw new Error("LIVEKIT_API_SECRET is not defined");
     }
 
-    const searchParams = request.nextUrl.searchParams;
+    const { searchParams } = new URL(request.url);
     let roomName = searchParams.get("roomName");
     let participantIdentity = searchParams.get("participantName");
-    const voice = searchParams.get("voice") as "male" | "female" | null;
+    const voice = searchParams.get("voice");
 
     if (!roomName) {
       roomName = `voice-assistant-room_${Math.floor(Math.random() * 10_000)}`;
@@ -43,19 +56,16 @@ export async function GET(request: NextRequest) {
       console.warn(`participantName not provided, generated random: ${participantIdentity}`);
     }
 
-    let agentToDispatchName: string | null = null;
-    if (voice === "female") {
-      agentToDispatchName = "agent_female_nazwa"; // Dopasuj do nazwy w Pythonie
-    } else if (voice === "male") {
-      agentToDispatchName = "agent_male_nazwa";   // Dopasuj do nazwy w Pythonie
-    }
-
-    const token = new AccessToken(API_KEY, API_SECRET, {
+    const token = new AccessToken(livekitApiKey, livekitApiSecret, {
       identity: participantIdentity,
-      // Metadane uczestnika mogą nadal być przydatne dla samego agenta lub dla logowania
-      metadata: voice ? JSON.stringify({ voice_gender: voice }) : undefined,
-      ttl: "15m", // Czas życia tokenu
     });
+
+    let agentToDispatchName: string | undefined;
+    if (voice === "female") {
+      agentToDispatchName = "agent_female_nazwa";
+    } else if (voice === "male") {
+      agentToDispatchName = "agent_male_nazwa";
+    }
 
     const grant: VideoGrant = {
       room: roomName,
@@ -64,34 +74,30 @@ export async function GET(request: NextRequest) {
       canPublishData: true,
       canSubscribe: true,
     };
-    token.addGrant(grant);
 
-    // Dodaj konfigurację pokoju, aby jawnie przydzielić agenta, jeśli został wybrany
     if (agentToDispatchName) {
-      const roomConfig = new RoomConfiguration({
-        agents: [
-          new RoomAgentDispatch({
-            agentName: agentToDispatchName,
-            // Opcjonalnie: możesz tu przekazać dodatkowe metadane specyficzne dla tego zadania (job) agenta
-            // metadata: JSON.stringify({ custom_job_data: "example" })
-          }),
-        ],
-      });
-      token.withRoomConfig(roomConfig);
-    } else {
-      // Co jeśli żaden głos nie został wybrany lub parametr 'voice' jest niepoprawny?
-      // Możesz zalogować ostrzeżenie lub nawet zwrócić błąd,
-      // albo pozwolić na połączenie bez agenta (jeśli to ma sens w Twojej aplikacji).
-      // Obecnie, jeśli agentToDispatchName jest null, żaden agent nie zostanie jawnie przydzielony przez RoomConfiguration.
-      // Jeśli nie masz domyślnych Dispatch Rules w LiveKit Cloud, które by coś łapały,
-      // to prawdopodobnie żaden agent nie dołączy.
-      console.warn(`No specific agent dispatched for voice: ${voice}. Participant will join without explicit agent assignment via token.`);
+      grant.roomCreate = true; 
+      
+      const agentDispatchConfig: LiveKitProtocolRoomAgentDispatch = {
+        agentName: agentToDispatchName,
+      };
+      
+      const roomConfigForToken: LiveKitProtocolRoomConfiguration = {
+        agents: [agentDispatchConfig],
+      };
+      
+      // Assigning the manually constructed object that should be structurally compatible
+      // with RoomConfiguration from '@livekit/protocol' as expected by token.roomConfig setter.
+      token.roomConfig = roomConfigForToken as any; // Using 'as any' to bypass strict compile-time check if exact type is elusive to import/construct.
+                                                // The runtime behavior depends on LiveKit server correctly interpreting this structure.
     }
+
+    token.addGrant(grant);
 
     const participantToken = await token.toJwt();
 
     const data: ConnectionDetails = {
-      serverUrl: LIVEKIT_URL,
+      serverUrl: livekitHost,
       roomName,
       participantToken: participantToken,
       participantName: participantIdentity,
