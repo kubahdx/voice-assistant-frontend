@@ -132,6 +132,7 @@ const App: React.FC = () => {
       {/* Sekcja wyboru głosu - zawsze widoczna, jeśli nie jesteśmy połączeni */}
       {(!room || room.state === 'disconnected') && (
         <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
+          <p>TEST RENDEROWANIA</p>
           <VoiceSelection onVoiceSelect={handleVoiceSelect} currentVoice={selectedVoice} />
           {selectedVoice && (
             <>
