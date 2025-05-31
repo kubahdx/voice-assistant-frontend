@@ -26,7 +26,7 @@ const App: React.FC = () => {
     console.log(`Wybrano głos: ${voice}, pokój docelowy: ${newRoomName}`);
   };
 
-  const getToken = async (identity: string, currentRoomName: string, voiceChoice: string | null): Promise<string | null> => {
+  const getToken = async (identity: string, currentRoomName: string): Promise<string | null> => {
     if (!currentRoomName) {
       setError("Nazwa pokoju nie jest ustawiona. Wybierz głos.");
       return null;
@@ -71,7 +71,7 @@ const App: React.FC = () => {
     setError(null);
 
     const participantName = `user-${Math.random().toString(36).substring(7)}`;
-    const newToken = await getToken(participantName, roomName, selectedVoice);
+    const newToken = await getToken(participantName, roomName);
 
     if (newToken) {
       setToken(newToken);
